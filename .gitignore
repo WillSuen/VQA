@@ -1,7 +1,7 @@
-./vqa-sva/*
+vqa-sva/
 nohup.out
 resnet-*
-./others/
+others/
 *.ipynb
 *.db
 synset.txt
