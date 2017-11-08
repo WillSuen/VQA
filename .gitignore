@@ -1,0 +1,8 @@
+./vqa-sva/*
+nohup.out
+resnet-*
+./others/
+*.ipynb
+*.db
+synset.txt
+
