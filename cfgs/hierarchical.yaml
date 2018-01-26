@@ -1,0 +1,40 @@
+---
+gpus: '0'
+batch_size: 32
+frequent: 50
+kv_store: 'device'
+memonger: False
+retrain: False
+model_path: './model/'
+model_load_epoch: 0
+num_epoch: 100
+network:
+  rnn_type: 'gru'
+  gru_dropout: 0.25
+  dropout: 0.0
+  hidden_size: 512
+  vocab_size: 15031
+
+train:
+  bn_mom: 0.9
+  lr: 0.0001
+  mom: 0.9
+  wd: 0.0001
+  workspace: 256
+  lr_factor_epoch: 13
+  lr_factor: 0.25
+  beta1: 0.9
+  beta2: 0.999
+  uni_mag: 0.4
+  skip_thought_dict: './vqa-sva/rundata/skip-argdict.pkl'
+
+dataset:
+  img_feature_path: './img_features.db'
+  qa_path: './vqa-sva/rundata/train+val+vg_train_sampling.pkl'
+  max_seq_length: 25
+  sent_gru_hsize: 2400
+  w: 14
+  h: 14
+  seed: 1234
+  
+

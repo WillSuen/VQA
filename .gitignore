@@ -1,10 +1,22 @@
-*.pyc
+
 vqa-sva/
-nohup.out
 resnet-*
 others/
-*.ipynb
-*.db
+
 synset.txt
 config/
-data/
+
+mxnet/
+
+# output files
+*.out
+
+# data
+/data/*
+*.db
+
+# pyc files
+*pyc
+
+# jupyter notebook files
+*ipynb*

@@ -1,6 +1,3 @@
-import sys
-ProjPath = '/home/wsun12/src/VQA'
-sys.path.append(ProjPath)
 import mxnet as mx
 import numpy as np
 import os
@@ -183,6 +180,7 @@ def gru(num_hidden, indata, prev_state, param, seqidx, layeridx,
         next_h = prev_state.h + mx.sym.broadcast_mul(mask, next_h - prev_state.h)
     return GRUState(h=next_h)
 
+
 def GRU_unroll(batch_size, input_seq, in_dim, seq_len, num_hidden, prefix, 
                dropout=0, mask=None, n_gpus=1):
     """
@@ -246,6 +244,7 @@ def bayesian_dp_sym(p, shape):
     mask = mx.sym.round(rand_num) / (1.0 - p)
     return mask
 
+
 def parallel_attention(ques_feat, img_feat, mask, batch_size):
     ## parallel_attention
     img_seq_size = 196
@@ -292,16 +291,19 @@ def parallel_attention(ques_feat, img_feat, mask, batch_size):
     
     return ques_atten_feat, img_atten_feat
 
-def hie_symbol(batch_size, rnn_type='gru'):
+
+def get_symbol(cfg):
     # constants
-    hidden_size = 512
-    vocab_size = 15031
+    batch_size = cfg.batch_size
+    rnn_type = cfg.network.rnn_type
+    hidden_size = cfg.network.hidden_size
+    vocab_size = cfg.network.vocab_size
+   
     wordembed_dim = hidden_size    # output dimension for word embedding
     
     # image feature
     ifeature = mx.sym.Variable('img_feature')    # input img_feature: batch_size X 196 X 2048
     hidden1 = mx.sym.FullyConnected(data=ifeature, num_hidden=hidden_size, name='FC1', flatten=False)
-    # reshape1 = mx.sym.reshape(data=hidden1, shape=(-1, 196, hidden_size), name='Reshape1')
     act1 = mx.sym.Activation(data=hidden1, act_type='tanh', name='Act1')
     drop1 = mx.sym.Dropout(data=act1, p=0.5, name='Drop1')    # output from this cnn: batch_size X 196 X hidden_size  
     

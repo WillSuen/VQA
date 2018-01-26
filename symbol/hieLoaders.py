@@ -12,14 +12,13 @@ import re
 import sqlite3
 import io
 
+
 def adapt_array(arr):
-    """
-    http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
-    """
     out = io.BytesIO()
     np.save(out, arr)
     out.seek(0)
     return sqlite3.Binary(out.read())
+
 
 def convert_array(text):
     out = io.BytesIO(text)
@@ -44,10 +43,9 @@ class SimpleBatch(object):
     self.provide_data = [(n, x.shape) for n,x in zip(self.data_names, self.data)]
     self.provide_label = [(n, x.shape) for n,x in zip(self.label_names, self.label)]
 
+    
 class VQAIter(mx.io.DataIter):
-    def __init__(self, qa_path, lmdb_path, batch_size, rnn_type='gru',
-                 max_seq_len=26, sent_gru_hsize=2400,  
-                 is_train=True, net=None, w=14, h=14, seed=1234):
+    def __init__(self, cfg, is_train=True, net=None):
         """
         Data loader for the VQA dataset.abs
 
@@ -57,34 +55,33 @@ class VQAIter(mx.io.DataIter):
         is_train: use answer sampling if set to True
         """
         super(VQAIter, self).__init__()
-        random.seed(seed)
-        qa_paths = qa_path.split(',')
+        random.seed(cfg.dataset.seed)
+        qa_paths = cfg.dataset.qa_path.split(',')
         logging.info("QA data paths:{}".format(qa_paths))
-        # env = lmdb.open(lmdb_path, readonly=True)
-        # self.txn = env.begin()
-        self.batch_size = batch_size
-        self.is_train=is_train
+        self.rnn_type = cfg.network.rnn_type
+        self.batch_size = cfg.batch_size
+        self.is_train = is_train
+        sent_gru_hsize = cfg.dataset.sent_gru_hsize
+        max_seq_len = cfg.dataset.max_seq_length
+        w = cfg.dataset.w
+        h = cfg.dataset.h
         
         # read image features from database
         sqlite3.register_adapter(np.ndarray, adapt_array)
         # Converts TEXT to np.array when selecting
         sqlite3.register_converter("array", convert_array)
-        self.con = sqlite3.connect("/home/wsun12/src/VQA/img_features.db", detect_types=sqlite3.PARSE_DECLTYPES)
+        self.con = sqlite3.connect(cfg.dataset.img_feature_path, detect_types=sqlite3.PARSE_DECLTYPES)
         self.cur = self.con.cursor()
 
         # whether to use snake-shaped image data
-        self.provide_data = [('img_feature', (batch_size, w*h, 2048)),
-                             ('sent_seq', (batch_size, max_seq_len)),
-                             ('mask', (batch_size, max_seq_len)),
-                             ('sent_l0_init_h', (batch_size, 512)),
-                             #('sent_l0_init_c', (batch_size, 512))
-                            ]
-        #                    #('horizontal_zeros', (batch_size, 1,1,w)),
-        #                    #('vertical_zeros', (batch_size, 1,h,1))]
-        if rnn_type == 'lstm':
-            self.provide_data.append(('sent_l0_init_c', (batch_size, 512)))
+        self.provide_data = [('img_feature', (self.batch_size, w*h, 2048)),
+                             ('sent_seq', (self.batch_size, max_seq_len)),
+                             ('mask', (self.batch_size, max_seq_len)),
+                             ('sent_l0_init_h', (self.batch_size, 512))]
+        if self.rnn_type == 'lstm':
+            self.provide_data.append(('sent_l0_init_c', (self.batch_size, 512)))
         
-        self.provide_label = [('ans_label', (batch_size,))]
+        self.provide_label = [('ans_label', (self.batch_size,))]
 
         self.data_names = [t[0] for t in self.provide_data]
         self.label_names = [t[0] for t in self.provide_label]
@@ -125,13 +122,11 @@ class VQAIter(mx.io.DataIter):
             qid_list=[]
             for bidx in range(self.batch_size):
                 bdata = self.qa_list[bidx+curr_idx]
+                img_label = bdata['img_path']
+                self.cur.execute("select arr from features where img_path = '%s'" % img_label)
+                img_feature = self.cur.fetchone()[0].reshape(2048, -1)
                 
-                
-                label = bdata['img_path']
-                self.cur.execute("select arr from features where img_path = '%s'" % label)
-                feature = self.cur.fetchone()[0].reshape(2048, -1)
-                
-                self.data_buffer[0][bidx,:,:] = np.swapaxes(feature, 0, 1)
+                self.data_buffer[0][bidx,:,:] = np.swapaxes(img_feature, 0, 1)
                 self.data_buffer[1][bidx, :] = bdata['ques']
                 self.data_buffer[2][bidx, :] = bdata['qmask']
                 
