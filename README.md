@@ -2,5 +2,7 @@
 
 This is MXNet implementation of Hierarchical Question-Image Co-Attention for Visual Question Answering(https://arxiv.org/abs/1606.00061)
 
+![](./pics/hierarchical.jpg)
+
 #### Train
 `python train.py --cfg cfgs/hierarchical.yaml`
