@@ -9,4 +9,5 @@ This is MXNet implementation of Hierarchical Question-Image Co-Attention for Vis
 
 ##### Reference
 [1][HieCoAttenVQA](https://github.com/jiasenlu/HieCoAttenVQA)
+
 [2][vqa-sva](https://github.com/shtechair/vqa-sva)
